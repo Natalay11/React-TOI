@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Розово-белый калькулятор</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: #ffe4ed;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            font-family: 'Segoe UI', 'Courier New', monospace;
+            margin: 0;
+            padding: 20px;
+        }
+        .calculator {
+            background: #ffffff;
+            border-radius: 36px;
+            box-shadow: 0 20px 35px rgba(255, 105, 180, 0.25);
+            padding: 24px;
+            width: 360px;
+            border: 1px solid #ffbfd2;
+        }
+        .display {
+            margin-bottom: 24px;
+        }
+        #inputDisplay {
+            width: 100%;
+            background: #fffafc;
+            border: 2px solid #ffb7c9;
+            color: #c9386b;
+            font-size: 32px;
+            font-weight: bold;
+            padding: 14px;
+            text-align: right;
+            border-radius: 28px;
+            outline: none;
+            font-family: monospace;
+        }
+        .buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        button {
+            background: #fff0f5;
+            border: none;
+            color: #b83262;
+            font-size: 26px;
+            font-weight: bold;
+            padding: 16px 0;
+            border-radius: 60px;
+            cursor: pointer;
+            transition: 0.05s linear;
+            box-shadow: 0 2px 6px rgba(255, 80, 140, 0.2);
+            font-family: monospace;
+        }
+        button:active {
+            transform: scale(0.96);
+            background: #ffe2ed;
+        }
+        .operator {
+            background: #ffe0e9;
+            color: #bb2e62;
+            font-size: 28px;
+        }
+        .equals {
+            background: #ff99bb;
+            color: white;
+            font-size: 28px;
+        }
+        .history {
+            background: #fff6f9;
+            border: 1px solid #ffbfd2;
+            border-radius: 24px;
+            padding: 12px;
+            max-height: 180px;
+            overflow-y: auto;
+        }
+        .history-title {
+            color: #d8608c;
+            text-align: center;
+            font-weight: bold;
+            margin: 0 0 8px 0;
+            font-size: 14px;
+            border-bottom: 1px dashed #ffb0c3;
+            padding-bottom: 4px;
+        }
+        .history-list {
+            font-size: 13px;
+            color: #a53f66;
+            font-family: monospace;
+        }
+        .history-list div {
+            background: #ffffffc9;
+            margin: 5px 0;
+            padding: 6px 10px;
+            border-radius: 30px;
+            border-left: 3px solid #ff80a5;
+        }
+        .hidden {
+            visibility: hidden;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+<div class="calculator">
+    <div class="display">
+        <input type="text" id="inputDisplay" placeholder="0" value="">
+    </div>
+    <div class="buttons">
+        <button class="digit" data-digit="7">7</button>
+        <button class="digit" data-digit="8">8</button>
+        <button class="digit" data-digit="9">9</button>
+        <button class="operator" data-op="/">÷</button>
+
+        <button class="digit" data-digit="4">4</button>
+        <button class="digit" data-digit="5">5</button>
+        <button class="digit" data-digit="6">6</button>
+        <button class="operator" data-op="*">×</button>
+
+        <button class="digit" data-digit="1">1</button>
+        <button class="digit" data-digit="2">2</button>
+        <button class="digit" data-digit="3">3</button>
+        <button class="operator" data-op="+">+</button>
+
+        <button class="digit" data-digit="0">0</button>
+        <div class="hidden"></div>
+        <button class="equals" id="equalBtn">=</button>
+        <button class="operator" data-op="-">-</button>
+    </div>
+    <div class="history">
+        <div class="history-title"> ИСТОРИЯ </div>
+        <div id="historyContainer" class="history-list"></div>
+    </div>
+</div>
+<script>
+    const inputField = document.getElementById('inputDisplay');
+    const historyDiv = document.getElementById('historyContainer');
+    const equalBtn = document.getElementById('equalBtn');
+
+    function addToHistory(expression, result) {
+        const line = document.createElement('div');
+        line.textContent = expression + ' = ' + result;
+        historyDiv.appendChild(line);
+        historyDiv.scrollTop = historyDiv.scrollHeight;
+    }
+
+    function computeExpression(expr) {
+        try {
+            let safeExpr = expr.replace(/×/g, '*').replace(/÷/g, '/');
+            let result = eval(safeExpr);
+            if (isNaN(result) || !isFinite(result)) throw new Error();
+            return result;
+        } catch (e) {
+            return 'Ошибка';
+        }
+    }
+
+    function evaluateAndStore() {
+        let expr = inputField.value.trim();
+        if (expr === '') return;
+        let res = computeExpression(expr);
+        if (res !== 'Ошибка') {
+            addToHistory(expr, res);
+            inputField.value = res;
+        } else {
+            addToHistory(expr, 'Ошибка');
+            inputField.value = '';
+        }
+    }
+
+    document.querySelectorAll('.digit').forEach(btn => {
+        btn.addEventListener('click', () => {
+            let digit = btn.getAttribute('data-digit');
+            inputField.value += digit;
+        });
+    });
+
+    document.querySelectorAll('.operator').forEach(btn => {
+        btn.addEventListener('click', () => {
+            let op = btn.getAttribute('data-op');
+            let lastChar = inputField.value.slice(-1);
+            if (lastChar === '+' || lastChar === '-' || lastChar === '*' || lastChar === '/') {
+                inputField.value = inputField.value.slice(0, -1) + op;
+            } else {
+                inputField.value += op;
+            }
+        });
+    });
+
+    equalBtn.addEventListener('click', evaluateAndStore);
+
+    inputField.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            evaluateAndStore();
+        }
+    });
+</script>
+</body>
+</html>
